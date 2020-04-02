@@ -142,4 +142,6 @@ cython_debug/
 media
 static
 
-img
+img/*
+!img/.gitkeep
+playground.py
