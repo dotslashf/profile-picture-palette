@@ -5,6 +5,7 @@ import math
 import colorsys
 import shutil
 import requests
+import os
 
 
 class Thief:
@@ -13,6 +14,7 @@ class Thief:
         self.profile_image_url = user['url']
         self.file = None
         self.path = "./img/"
+        self.palette = []
 
     def download_profile_image(self):
         url = self.profile_image_url
@@ -20,8 +22,14 @@ class Thief:
 
         response = requests.get(url, stream=True)
         file = f"{self.user['screen_name']}_original.png"
-        with open(self.path + file, 'wb') as out_file:
-            shutil.copyfileobj(response.raw, out_file)
+        try:
+            with open(self.path + 'original/' + file, 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
+        except FileNotFoundError as e:
+            print(f"{e}, Creating the folder and save it")
+            os.makedirs(self.path + 'original')
+            with open(self.path + 'original/' + file, 'wb') as out_file:
+                shutil.copyfileobj(response.raw, out_file)
 
         self.file = file
 
@@ -45,11 +53,11 @@ class Thief:
         return (h2, lum2, v2)
 
     def generate_pattern(self, n_palette):
-        color_thief = ColorThief(self.path + self.file)
+        color_thief = ColorThief(self.path + "original/" + self.file)
 
         palette = color_thief.get_palette(color_count=n_palette)
         palette.sort(key=lambda rgb: self.sort_luminance(rgb, 16))
-        print(palette)
+        self.palette = palette
 
         w = 500
         h = w // n_palette
@@ -65,34 +73,75 @@ class Thief:
         palettes = Image.fromarray(palettes)
 
         file = self.file.replace('_original', '_palette')
-        palettes.show()
-        return palettes.save(self.path + file)
+        try:
+            palettes.save(self.path + 'palette/' + file)
+        except FileNotFoundError as e:
+            print(f"{e}, Creating the folder and save it")
+            os.makedirs(self.path + 'palette')
+            palettes.save(self.path + 'palette/' + file)
 
-    def step_gradient(self, color, mid_color, final_color):
+    def first_last_color_to_gradient(self):
         img = Image.new("RGB", (500, 500), "#FFFFFF")
         draw = ImageDraw.Draw(img)
 
-        r, g, b = color[0], color[1], color[2]
-        r_mid, g_mid, b_mid = mid_color[0], mid_color[1], mid_color[2]
-        r_final, g_final, b_final = final_color[0], final_color[1], final_color[2]
+        first_r, first_g, first_b = self.palette[0][0], self.palette[0][1], self.palette[0][2]
+        last_r, last_g, last_b = self.palette[-1][0], self.palette[-1][1], self.palette[-1][2]
 
-        r_start_to_mid = np.linspace(r, r_mid, num=150)
-        g_start_to_mid = np.linspace(g, g_mid, num=150)
-        b_start_to_mid = np.linspace(b, b_mid, num=150)
-
-        r_mid_to_final = np.linspace(r_mid, r_final, num=350)
-        g_mid_to_final = np.linspace(g_mid, g_final, num=350)
-        b_mid_to_final = np.linspace(b_mid, b_final, num=350)
-
-        r_final = [*r_start_to_mid, *r_mid_to_final]
-        g_final = [*g_start_to_mid, *g_mid_to_final]
-        b_final = [*b_start_to_mid, *b_mid_to_final]
-
-        list_color = [r_final, g_final, b_final]
+        r, g, b = (np.linspace(first_r, last_r, num=500),
+                   np.linspace(first_g, last_g, num=500),
+                   np.linspace(first_b, last_b, num=500))
 
         for i in range(500):
             # (0, i, 500, i) draw from top to bottom
             draw.line((0, i, 500, i), fill=(
-                int(list_color[0][i]), int(list_color[1][i]), int(list_color[2][i])))
+                int(r[i]), int(g[i]), int(b[i])))
 
-        img.show()
+        file = self.file.replace('_original', '_first_last_to_gradient')
+        try:
+            img.save(self.path + 'first_last_to_gradient/' + file)
+        except FileNotFoundError as e:
+            print(f"{e}, Creating the folder and save it")
+            os.makedirs(self.path + 'first_last_to_gradient')
+            img.save(self.path + 'first_last_to_gradient/' + file)
+
+    def palette_to_gradient(self):
+        img = Image.new("RGB", (500, 500), "#FFFFFF")
+        draw = ImageDraw.Draw(img)
+
+        colors = {}
+        for i in range(5):
+            key = "color_" + str(i)
+            value = self.palette[i]
+            colors[key] = value
+
+        rgb_step = {}
+        for i in range(4):
+            key = "rgb_" + str(i)
+            value = (np.linspace(colors[f"color_{i}"][0],
+                                 colors[f"color_{i+1}"][0], num=125),
+                     np.linspace(colors[f"color_{i}"][1],
+                                 colors[f"color_{i+1}"][1], num=125),
+                     np.linspace(colors[f"color_{i}"][2],
+                                 colors[f"color_{i+1}"][2], num=125))
+            rgb_step[key] = value
+
+        r_final = np.concatenate([rgb_step[f"rgb_{i}"][0] for i in range(4)])
+        g_final = np.concatenate([rgb_step[f"rgb_{i}"][1] for i in range(4)])
+        b_final = np.concatenate([rgb_step[f"rgb_{i}"][2] for i in range(4)])
+
+        r_final = r_final.tolist()
+        g_final = g_final.tolist()
+        b_final = b_final.tolist()
+
+        for i in range(500):
+            # (0, i, 500, i) draw from top to bottom
+            draw.line((0, i, 500, i), fill=(
+                int(r_final[i]), int(g_final[i]), int(b_final[i])))
+
+        file = self.file.replace('_original', '_palette_to_gradient')
+        try:
+            img.save(self.path + 'palette_to_gradient/' + file)
+        except OSError as e:
+            print(f"{e}, Creating the folder and save it")
+            os.makedirs(self.path + 'palette_to_gradient')
+            img.save(self.path + 'palette_to_gradient/' + file)
