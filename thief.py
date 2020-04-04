@@ -145,3 +145,19 @@ class Thief:
             print(f"{e}, Creating the folder and save it")
             os.makedirs(self.path + 'palette_to_gradient')
             img.save(self.path + 'palette_to_gradient/' + file)
+
+    def dominant_color(self):
+        color_thief = ColorThief(self.path + "original/" + self.file)
+        dominant = color_thief.get_color()
+
+        w = 500
+        h = 500
+
+        img = Image.new("RGB", (w, h), color=dominant)
+        file = self.file.replace('_original', '_dominant')
+        try:
+            img.save(self.path + 'dominant/' + file)
+        except FileNotFoundError as e:
+            print(f"{e}, Creating the folder and save it")
+            os.makedirs(self.path + 'dominant')
+            img.save(self.path + 'dominant/' + file)
