@@ -1,6 +1,6 @@
 from colorthief import ColorThief
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 import math
 import colorsys
 import shutil
@@ -49,6 +49,7 @@ class Thief:
 
         palette = color_thief.get_palette(color_count=n_palette)
         palette.sort(key=lambda rgb: self.sort_luminance(rgb, 16))
+        print(palette)
 
         w = 500
         h = w // n_palette
@@ -66,3 +67,32 @@ class Thief:
         file = self.file.replace('_original', '_palette')
         palettes.show()
         return palettes.save(self.path + file)
+
+    def step_gradient(self, color, mid_color, final_color):
+        img = Image.new("RGB", (500, 500), "#FFFFFF")
+        draw = ImageDraw.Draw(img)
+
+        r, g, b = color[0], color[1], color[2]
+        r_mid, g_mid, b_mid = mid_color[0], mid_color[1], mid_color[2]
+        r_final, g_final, b_final = final_color[0], final_color[1], final_color[2]
+
+        r_start_to_mid = np.linspace(r, r_mid, num=150)
+        g_start_to_mid = np.linspace(g, g_mid, num=150)
+        b_start_to_mid = np.linspace(b, b_mid, num=150)
+
+        r_mid_to_final = np.linspace(r_mid, r_final, num=350)
+        g_mid_to_final = np.linspace(g_mid, g_final, num=350)
+        b_mid_to_final = np.linspace(b_mid, b_final, num=350)
+
+        r_final = [*r_start_to_mid, *r_mid_to_final]
+        g_final = [*g_start_to_mid, *g_mid_to_final]
+        b_final = [*b_start_to_mid, *b_mid_to_final]
+
+        list_color = [r_final, g_final, b_final]
+
+        for i in range(500):
+            # (0, i, 500, i) draw from top to bottom
+            draw.line((0, i, 500, i), fill=(
+                int(list_color[0][i]), int(list_color[1][i]), int(list_color[2][i])))
+
+        img.show()
