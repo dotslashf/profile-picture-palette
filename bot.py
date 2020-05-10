@@ -1,4 +1,5 @@
 import tweepy
+import time
 from thief import Thief
 
 class Bot:
@@ -77,5 +78,4 @@ class Bot:
             
             self.get_the_palette(user)
             self.tweet_the_palette(username, tweet.id)
-
-
+            time.sleep(30)
