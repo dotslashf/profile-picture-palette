@@ -11,7 +11,7 @@ import os
 class Thief:
     def __init__(self, user):
         self.user = user
-        self.profile_image_url = user['url']
+        self.profile_image_url = user.profile_image_url_https
         self.file = None
         self.path = "./img/"
         self.palette = []
@@ -21,7 +21,7 @@ class Thief:
         url = url.replace('_normal', '')
 
         response = requests.get(url, stream=True)
-        file = f"{self.user['screen_name']}_original.png"
+        file = f"{self.user.screen_name}_original.png"
         try:
             with open(self.path + 'original/' + file, 'wb') as out_file:
                 shutil.copyfileobj(response.raw, out_file)
@@ -52,7 +52,7 @@ class Thief:
 
         return (h2, lum2, v2)
 
-    def generate_pattern(self, n_palette):
+    def generate_pattern(self, n_palette=5):
         color_thief = ColorThief(self.path + "original/" + self.file)
 
         palette = color_thief.get_palette(color_count=n_palette)
