@@ -17,7 +17,7 @@ access_token = db.find_object('access_token')
 access_token_secret = db.find_object('access_token_secret')
 
 def main(ck, cs, at, ats, db):
-    tw = Bot(cs, cs, at, ats)
+    tw = Bot(cs, ck, at, ats)
     db.select_col('tweet')
 
     minute_wait = 5
