@@ -26,7 +26,7 @@ def main(ck, cs, at, ats, db):
         l = db.find_last_object()
         last_id = l['tweet_last_id']
 
-        since_id = tw.get_mention_tweet(last_id)
+        since_id = tw.get_mention(last_id)
 
         if (last_id != since_id):
             db.insert_object({'tweet_last_id': since_id})
