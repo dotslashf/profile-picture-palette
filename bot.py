@@ -32,7 +32,7 @@ class Bot:
             trigger_words = "can you"
             print(tweet.text)
 
-            if trigger_words in tweet.text:
+            if trigger_words in tweet.text or trigger_words.capitalize() in tweet.text:
                 list_mentions.append(tweet)
 
         self.process_mention(list_mentions)
